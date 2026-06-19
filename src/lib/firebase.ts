@@ -3,34 +3,16 @@ import { getAuth } from 'firebase/auth';
 import { getFirestore, doc, getDocFromServer } from 'firebase/firestore';
 import localAppletConfig from '../../firebase-applet-config.json';
 
-// Helper to safely fetch environment variables for both Vite and Next.js / Node
-const getEnv = (key: string): string => {
-  // Vite client-side config
-  if (typeof import.meta !== 'undefined' && (import.meta as any).env) {
-    const viteVal = (import.meta as any).env[key];
-    if (viteVal) return viteVal;
-  }
-  // Next.js / standard Node process config
-  try {
-    if (typeof process !== 'undefined' && process.env) {
-      const nodeVal = process.env[key];
-      if (nodeVal) return nodeVal;
-    }
-  } catch {
-    // Ignore ReferenceError if process is not defined
-  }
-  return '';
-};
-
-// Safe fallback config
+// Vite requires exact, literal strings for import.meta.env replacement during build.
+// DO NOT use dynamic getters like getEnv(key) as this prevents Vite from injecting the variables statically.
 const firebaseConfig = {
-  apiKey: getEnv('VITE_FIREBASE_API_KEY') || getEnv('NEXT_PUBLIC_FIREBASE_API_KEY') || localAppletConfig.apiKey,
-  authDomain: getEnv('VITE_FIREBASE_AUTH_DOMAIN') || getEnv('NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN') || localAppletConfig.authDomain,
-  projectId: getEnv('VITE_FIREBASE_PROJECT_ID') || getEnv('NEXT_PUBLIC_FIREBASE_PROJECT_ID') || localAppletConfig.projectId,
-  storageBucket: getEnv('VITE_FIREBASE_STORAGE_BUCKET') || getEnv('NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET') || localAppletConfig.storageBucket,
-  messagingSenderId: getEnv('VITE_FIREBASE_MESSAGING_SENDER_ID') || getEnv('NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID') || localAppletConfig.messagingSenderId,
-  appId: getEnv('VITE_FIREBASE_APP_ID') || getEnv('NEXT_PUBLIC_FIREBASE_APP_ID') || localAppletConfig.appId,
-  measurementId: getEnv('VITE_FIREBASE_MEASUREMENT_ID') || getEnv('NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID') || localAppletConfig.measurementId || '',
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || localAppletConfig.apiKey,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || localAppletConfig.authDomain,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || localAppletConfig.projectId,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || localAppletConfig.storageBucket,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || localAppletConfig.messagingSenderId,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || localAppletConfig.appId,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || localAppletConfig.measurementId || '',
 };
 
 const app = initializeApp(firebaseConfig);
