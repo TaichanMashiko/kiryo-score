@@ -95,7 +95,7 @@ export default function Login({ onLoginSuccess, externalError, onClearExternalEr
           if (!teacherCode) {
             throw new Error('教員用セキュリティコードを入力してください。');
           }
-          const expectedCode = import.meta.env.VITE_TEACHER_SIGNUP_CODE || 'kiryo-teacher-2026';
+          const expectedCode = import.meta.env.VITE_TEACHER_SIGNUP_CODE || 'm1t0k1ry0';
           if (teacherCode !== expectedCode) {
             throw new Error('入力された教員用セキュリティコード（合言葉）が正しくありません。正しい検証用コードを管理者の先生にお問い合わせください。');
           }
