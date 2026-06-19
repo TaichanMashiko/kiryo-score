@@ -1,0 +1,6 @@
+{
+  "name": "模試成績・学習管理システム",
+  "description": "生徒の模試成績の管理、学習記録、おすすめ問題集の自動表示、及び教員用CSVインポートを備えた成績・学習管理プラットフォームです。",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

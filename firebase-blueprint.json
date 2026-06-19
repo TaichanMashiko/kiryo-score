@@ -1,0 +1,94 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile containing basic info, and student-specific settings if role is student.",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "description": "Email address of the user" },
+        "name": { "type": "string", "description": "Full name in Japanese (Kanji)" },
+        "kana_name": { "type": "string", "description": "Full name in Half-width Katakana (e.g. ﾔﾏｸﾞﾁ ﾕｳｶ)" },
+        "role": { "type": "string", "enum": ["student", "teacher"], "description": "User role: student or teacher" },
+        "grade": { "type": "string", "description": "Grade of the student (e.g. 高校３年生)" },
+        "class": { "type": "string", "description": "Class identifier (2-digit string, e.g. 05)" },
+        "attendance_number": { "type": "string", "description": "Attendance number (4-digit string, e.g. 0030)" },
+        "target_school": { "type": "string", "description": "Target school of the student" },
+        "target_deviation": { "type": "number", "description": "Target deviation score of the student" }
+      },
+      "required": ["email", "name", "kana_name", "role"]
+    },
+    "MockResult": {
+      "title": "MockResult",
+      "description": "Record of student mock test results.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Uploader student's UID" },
+        "exam_name": { "type": "string", "description": "Name of the mock exam (e.g. 第1回ベネッセ総合学力テスト)" },
+        "exam_date": { "type": "string", "description": "Academic year of implementation (e.g. 2025年度)" },
+        "subject_deviations": {
+          "type": "object",
+          "description": "Map containing subject deviations and their averages"
+        }
+      },
+      "required": ["uid", "exam_name", "exam_date", "subject_deviations"]
+    },
+    "StudyLog": {
+      "title": "StudyLog",
+      "description": "Student's daily study log.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "User ID of the student who recorded this log" },
+        "date": { "type": "string", "format": "date", "description": "Date of study (YYYY-MM-DD)" },
+        "duration": { "type": "number", "description": "Study duration in minutes" },
+        "subject": { "type": "string", "enum": ["英語", "数学", "国語", "理科", "社会", "その他"], "description": "Subject studied" },
+        "content": { "type": "string", "description": "Description of matching study contents" }
+      },
+      "required": ["uid", "date", "duration", "subject"]
+    },
+    "Workbook": {
+      "title": "Workbook",
+      "description": "Workbooks recommended by teachers, based on subject and recommended deviation ranges.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "description": "Title of the workbook" },
+        "subject": { "type": "string", "description": "Subject of the workbook" },
+        "min_deviation": { "type": "number", "description": "Minimum deviation to be recommended" },
+        "max_deviation": { "type": "number", "description": "Maximum deviation to be recommended" }
+      },
+      "required": ["title", "subject", "min_deviation", "max_deviation"]
+    },
+    "StudentWorkbook": {
+      "title": "StudentWorkbook",
+      "description": "Workbook registrations mapping students to workbooks they are currently working on.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Auth UID of the student" },
+        "workbookId": { "type": "string", "description": "Document ID of the matching workbook" },
+        "registeredAt": { "type": "string", "format": "date-time", "description": "The timestamp of registration" }
+      },
+      "required": ["uid", "workbookId", "registeredAt"]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "User profiles partitioned by Auth ID."
+    },
+    "mock_results/{resultId}": {
+      "schema": { "$ref": "#/entities/MockResult" },
+      "description": "Mock exam score results for students."
+    },
+    "study_logs/{logId}": {
+      "schema": { "$ref": "#/entities/StudyLog" },
+      "description": "Student study records."
+    },
+    "workbooks/{workbookId}": {
+      "schema": { "$ref": "#/entities/Workbook" },
+      "description": "Workbooks entered by users (teachers)."
+    },
+    "student_workbooks/{studentWbId}": {
+      "schema": { "$ref": "#/entities/StudentWorkbook" },
+      "description": "Registrations mapping students to workbooks they are actively using/tracking."
+    }
+  }
+}

@@ -1,0 +1,44 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper: Checks if the logged-in user has 'teacher' role or is a school staff (by email domain)
+    function isTeacher() {
+      return request.auth != null && (
+        (request.auth.token.keys().contains('email') && request.auth.token.email.matches('.*@kiryo\\.ac\\.jp')) ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'teacher')
+      );
+    }
+
+    // 1. Users Collection
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.auth.uid == userId;
+      allow update: if request.auth != null;
+      allow delete: if request.auth != null;
+    }
+
+    // 2. Mock Results Collection
+    match /mock_results/{resultId} {
+      allow read: if request.auth != null; // Allow general reading to prevent dashboard load failure
+      allow create, update, delete: if request.auth != null;
+    }
+
+    // 3. Study Logs Collection
+    match /study_logs/{logId} {
+      allow read, create, update, delete: if request.auth != null;
+    }
+
+    // 4. Workbooks Collection
+    match /workbooks/{workbookId} {
+      allow read: if request.auth != null;
+      allow create, update, delete: if request.auth != null;
+    }
+
+    // 5. Student Workbooks Collection
+    match /student_workbooks/{studentWbId} {
+      allow read, create, update, delete: if request.auth != null;
+    }
+  }
+}
