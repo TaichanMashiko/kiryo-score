@@ -15,8 +15,16 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || localAppletConfig.measurementId || '',
 };
 
+const isCustomFirebase = !!import.meta.env.VITE_FIREBASE_API_KEY;
+
 const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app, localAppletConfig.firestoreDatabaseId);
+
+// If using custom Firebase (Vercel), we want the default database (don't pass DB ID).
+// If using AI Studio's config, we must pass the specific database ID.
+export const db = isCustomFirebase 
+  ? getFirestore(app)
+  : getFirestore(app, localAppletConfig.firestoreDatabaseId);
+
 export const auth = getAuth(app);
 
 // Connectivity Test (as recommended in SKILL.md)
