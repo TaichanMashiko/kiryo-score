@@ -4,26 +4,20 @@ import { getFirestore, doc, getDocFromServer } from 'firebase/firestore';
 import localAppletConfig from '../../firebase-applet-config.json';
 
 // Vite requires exact, literal strings for import.meta.env replacement during build.
-// DO NOT use dynamic getters like getEnv(key) as this prevents Vite from injecting the variables statically.
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || localAppletConfig.apiKey,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || localAppletConfig.authDomain,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || localAppletConfig.projectId,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || localAppletConfig.storageBucket,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || localAppletConfig.messagingSenderId,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || localAppletConfig.appId,
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || localAppletConfig.measurementId || '',
+  apiKey: localAppletConfig.apiKey,
+  authDomain: localAppletConfig.authDomain,
+  projectId: localAppletConfig.projectId,
+  storageBucket: localAppletConfig.storageBucket,
+  messagingSenderId: localAppletConfig.messagingSenderId,
+  appId: localAppletConfig.appId,
+  measurementId: localAppletConfig.measurementId || '',
 };
-
-const isCustomFirebase = !!import.meta.env.VITE_FIREBASE_API_KEY;
 
 const app = initializeApp(firebaseConfig);
 
-// If using custom Firebase (Vercel), we want the default database (don't pass DB ID).
 // If using AI Studio's config, we must pass the specific database ID.
-export const db = isCustomFirebase 
-  ? getFirestore(app)
-  : getFirestore(app, localAppletConfig.firestoreDatabaseId);
+export const db = getFirestore(app, localAppletConfig.firestoreDatabaseId);
 
 export const auth = getAuth(app);
 
