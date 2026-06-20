@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { normalizeToHalfWidthKana, padLeftWithZeros } from '../utils/kanaUtils';
+import { convertImageToBase64 } from '../utils/imageConverter';
 
 export default function TeacherDashboard() {
   // DB States
@@ -36,6 +37,7 @@ export default function TeacherDashboard() {
   const [wbMaxDev, setWbMaxDev] = useState<number | ''>(70);
   const [wbTotalPages, setWbTotalPages] = useState<number | ''>('');
   const [wbInstructions, setWbInstructions] = useState('');
+  const [wbCoverImageBase64, setWbCoverImageBase64] = useState<string>('');
   const [savingWb, setSavingWb] = useState(false);
 
   // Workbook Edit Modal States
@@ -46,6 +48,7 @@ export default function TeacherDashboard() {
   const [editWbMaxDev, setEditWbMaxDev] = useState<number | ''>(70);
   const [editWbTotalPages, setEditWbTotalPages] = useState<number | ''>('');
   const [editWbInstructions, setEditWbInstructions] = useState('');
+  const [editWbCoverImageBase64, setEditWbCoverImageBase64] = useState<string>('');
 
   // UI Tab & Modal States
   const [activeTab, setActiveTab] = useState<'students' | 'workbooks' | 'csv-import'>('students');
@@ -264,7 +267,8 @@ export default function TeacherDashboard() {
         min_deviation: wbMinDev === '' ? 30 : Number(wbMinDev),
         max_deviation: wbMaxDev === '' ? 85 : Number(wbMaxDev),
         ...(wbTotalPages ? { totalPages: Number(wbTotalPages) } : {}),
-        instructions: wbInstructions.trim()
+        instructions: wbInstructions.trim(),
+        ...(wbCoverImageBase64 ? { coverImageBase64: wbCoverImageBase64 } : {})
       };
       await addDoc(collection(db, 'workbooks'), payload);
       setWbTitle('');
@@ -272,6 +276,7 @@ export default function TeacherDashboard() {
       setWbMaxDev(70);
       setWbTotalPages('');
       setWbInstructions('');
+      setWbCoverImageBase64('');
       showNotification('success', 'おすすめ問題集を登録しました！');
     } catch (err: any) {
       console.error(err);
@@ -298,9 +303,11 @@ export default function TeacherDashboard() {
         min_deviation: editWbMinDev === '' ? 30 : Number(editWbMinDev),
         max_deviation: editWbMaxDev === '' ? 85 : Number(editWbMaxDev),
         totalPages: editWbTotalPages === '' ? null : Number(editWbTotalPages),
-        instructions: editWbInstructions.trim()
+        instructions: editWbInstructions.trim(),
+        ...(editWbCoverImageBase64 ? { coverImageBase64: editWbCoverImageBase64 } : {})
       });
       setEditingWorkbook(null);
+      setEditWbCoverImageBase64('');
       showNotification('success', 'おすすめ問題集を更新しました！');
     } catch (err: any) {
       console.error(err);
@@ -846,6 +853,34 @@ export default function TeacherDashboard() {
                 />
               </div>
 
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">
+                  教材の画像 (任意)
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      try {
+                        const base64 = await convertImageToBase64(file);
+                        setWbCoverImageBase64(base64);
+                      } catch (err) {
+                        console.error('Image processing failed:', err);
+                      }
+                    }
+                  }}
+                  className="block w-full text-xs text-gray-500 file:mr-4 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                />
+                {wbCoverImageBase64 && (
+                  <div className="mt-2">
+                    <img src={wbCoverImageBase64} alt="Preview" className="h-24 w-auto object-cover rounded shadow-sm" />
+                    <button type="button" onClick={() => setWbCoverImageBase64('')} className="mt-1 text-[10px] text-red-500 underline">画像を削除</button>
+                  </div>
+                )}
+              </div>
+
               <button
                 type="submit"
                 disabled={savingWb}
@@ -885,6 +920,7 @@ export default function TeacherDashboard() {
                                 setEditWbMaxDev(book.max_deviation);
                                 setEditWbTotalPages(book.totalPages !== undefined ? book.totalPages : '');
                                 setEditWbInstructions(book.instructions || '');
+                                setEditWbCoverImageBase64(book.coverImageBase64 || '');
                               }}
                               className="text-gray-400 hover:text-indigo-600 p-1 rounded hover:bg-indigo-50 transition-all animate-none"
                               title="教材情報を編集"
@@ -901,6 +937,13 @@ export default function TeacherDashboard() {
                           </div>
                         </div>
                         <h4 className="font-extrabold text-sm text-gray-850 tracking-tight">{book.title}</h4>
+
+                        {book.coverImageBase64 && (
+                          <div className="w-full h-32 my-2 bg-gray-50 rounded-lg overflow-hidden border border-gray-150 flex items-center justify-center">
+                            <img src={book.coverImageBase64} alt={book.title} className="max-h-full max-w-full object-contain" />
+                          </div>
+                        )}
+
                         <div className="flex items-center space-x-3 text-gray-400">
                           {book.totalPages && (
                             <span className="font-semibold font-mono">総ページ: {book.totalPages}p</span>
@@ -1540,6 +1583,34 @@ export default function TeacherDashboard() {
                   rows={4}
                   className="block w-full px-3 py-2 border border-gray-200 rounded-lg text-xs bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none resize-none leading-normal"
                 />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-600 mb-1">
+                  教材の画像 (任意)
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      try {
+                        const base64 = await convertImageToBase64(file);
+                        setEditWbCoverImageBase64(base64);
+                      } catch (err) {
+                        console.error('Image processing failed:', err);
+                      }
+                    }
+                  }}
+                  className="block w-full text-xs text-gray-500 file:mr-4 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                />
+                {editWbCoverImageBase64 && (
+                  <div className="mt-2">
+                    <img src={editWbCoverImageBase64} alt="Preview" className="h-24 w-auto object-cover rounded shadow-sm" />
+                    <button type="button" onClick={() => setEditWbCoverImageBase64('')} className="mt-1 text-[10px] text-red-500 underline">画像を削除</button>
+                  </div>
+                )}
               </div>
 
               <div className="flex space-x-3 pt-4 border-t border-gray-150">

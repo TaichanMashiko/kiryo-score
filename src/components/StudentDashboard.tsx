@@ -10,6 +10,8 @@ import {
   Smile, Trophy, Medal, Bell, X, Trash2
 } from 'lucide-react';
 
+import { convertImageToBase64 } from '../utils/imageConverter';
+
 interface StudentDashboardProps {
   user: User;
   onUserUpdate: (updatedUser: User) => void;
@@ -71,6 +73,7 @@ export default function StudentDashboard({ user, onUserUpdate }: StudentDashboar
   const [newWbTitle, setNewWbTitle] = useState('');
   const [newWbSubject, setNewWbSubject] = useState<StudySubject>('英語');
   const [newWbTotalPages, setNewWbTotalPages] = useState<number | ''>('');
+  const [newWbCoverImageBase64, setNewWbCoverImageBase64] = useState<string>('');
   const [savingCustomWb, setSavingCustomWb] = useState(false);
 
   // Delete Confirmation modal state
@@ -355,7 +358,8 @@ export default function StudentDashboard({ user, onUserUpdate }: StudentDashboar
         max_deviation: 85,
         totalPages: newWbTotalPages !== '' ? Number(newWbTotalPages) : undefined,
         createdBy: user.uid,
-        instructions: '自主学習用登録教材'
+        instructions: '自主学習用登録教材',
+        ...(newWbCoverImageBase64 ? { coverImageBase64: newWbCoverImageBase64 } : {})
       };
       
       const docRef = await addDoc(collection(db, 'workbooks'), payload);
@@ -670,7 +674,7 @@ export default function StudentDashboard({ user, onUserUpdate }: StudentDashboar
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
               </span>
-              <h2 className="text-base font-black tracking-wider text-emerald-300">⚡ カンタン1タップ学習記録 & タイマー</h2>
+              <h2 className="text-base font-bold tracking-wider text-emerald-300">⚡ カンタン1タップ学習記録 & タイマー</h2>
             </div>
             <p className="text-xs text-indigo-200 mt-0.5">
               スマホに最適化！学習時間をタイマーで計るか、+15分などのボタンをタップしてすぐにがんばりを登録できます。
@@ -1159,7 +1163,7 @@ export default function StudentDashboard({ user, onUserUpdate }: StudentDashboar
       )}
 
       {/* Tabs */}
-      <div className="border-b border-gray-200">
+      <div className="border-b border-gray-200 mt-8 mb-6">
         <nav className="flex space-x-6 overflow-x-auto scrollbar-none whitespace-nowrap pb-px px-1" aria-label="Tabs">
           <button
             onClick={() => setActiveTab('overview')}
@@ -1170,7 +1174,7 @@ export default function StudentDashboard({ user, onUserUpdate }: StudentDashboar
             }`}
           >
             <Activity className="h-4 w-4" />
-            <span>総合データ推移</span>
+            <span>ダッシュボード</span>
           </button>
           <button
             onClick={() => setActiveTab('logs')}
@@ -1181,7 +1185,7 @@ export default function StudentDashboard({ user, onUserUpdate }: StudentDashboar
             }`}
           >
             <List className="h-4 w-4" />
-            <span>日常学習の記録</span>
+            <span>学習記録</span>
           </button>
           <button
             onClick={() => setActiveTab('recommendations')}
@@ -1246,7 +1250,7 @@ export default function StudentDashboard({ user, onUserUpdate }: StudentDashboar
                   </div>
                 ) : (
                   <ResponsiveContainer width="100%" height="105%">
-                    <LineChart data={chartData} margin={{ top: 15, right: 15, left: -25, bottom: 15 }}>
+                    <LineChart data={chartData} margin={{ top: 20, right: 10, left: -20, bottom: 5 }}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
                       <XAxis 
                         dataKey="name" 
@@ -1262,7 +1266,7 @@ export default function StudentDashboard({ user, onUserUpdate }: StudentDashboar
                       {user.target_deviation && (
                         <ReferenceLine
                           y={user.target_deviation}
-                          stroke="#F59E0B"
+                          stroke="#D97706"
                           strokeDasharray="4 4"
                           label={{ value: '志望校目標', fill: '#D97706', fontSize: 10, position: 'insideTopLeft', offset: 10 }}
                         />
@@ -1328,21 +1332,21 @@ export default function StudentDashboard({ user, onUserUpdate }: StudentDashboar
                       const bookLogs = studyLogs.filter((log) => log.workbookId === book.id);
                       const totalMinutes = bookLogs.reduce((sum, log) => sum + log.duration, 0);
                       const totalHours = (totalMinutes / 60).toFixed(1);
+                      const maxPageCompleted = bookLogs.reduce((max, log) => log.pagesTo ? Math.max(max, log.pagesTo) : max, 0);
                       
-                      const maxPageCompleted = bookLogs.length > 0 
-                        ? Math.max(...bookLogs.map((l) => l.pagesTo || 0), 0) 
-                        : 0;
-                        
                       const totalPages = book.totalPages || 0;
-                      const progressPercentage = totalPages > 0 
-                        ? Math.min(100, Math.round((maxPageCompleted / totalPages) * 100)) 
-                        : 0;
+                      let progressPercentage = 0;
+                      if (totalPages > 0) {
+                        progressPercentage = Math.min(100, Math.round((maxPageCompleted / totalPages) * 100));
+                      } else if (maxPageCompleted > 0) {
+                        progressPercentage = 100; // Has pages but no total, count as doing something
+                      }
 
                       const progressColors: Record<string, string> = {
-                        英語: 'bg-emerald-500',
+                        英語: 'bg-indigo-500',
                         数学: 'bg-blue-500',
-                        国語: 'bg-red-500',
-                        理科: 'bg-teal-500',
+                        国語: 'bg-rose-500',
+                        理科: 'bg-emerald-500',
                         社会: 'bg-amber-500',
                         その他: 'bg-purple-500'
                       };
@@ -1372,14 +1376,13 @@ export default function StudentDashboard({ user, onUserUpdate }: StudentDashboar
                             </div>
                           </div>
 
-                          {/* Progress Bar slider design */}
                           <div className="w-full bg-gray-200 h-1.5 rounded-full overflow-hidden my-2">
                             <div 
                               className={`${colorClass} h-full transition-all duration-500`} 
                               style={{ width: `${totalPages > 0 ? progressPercentage : (maxPageCompleted > 0 ? 100 : 0)}%` }} 
                             />
                           </div>
-
+                          
                           <div className="flex items-center justify-between text-[10px] text-gray-400 font-mono">
                             <span className="flex items-center">
                               <Clock className="h-3 w-3 mr-0.5 text-gray-400" />
@@ -1391,7 +1394,7 @@ export default function StudentDashboard({ user, onUserUpdate }: StudentDashboar
                               </span>
                             ) : (
                               <span>
-                                到達: <strong className="text-gray-750 font-bold">{maxPageCompleted}</strong>p <span className="text-[9px] font-sans text-gray-400 font-normal">(総数未設定)</span>
+                                到達: <strong className="text-gray-500 font-bold">{maxPageCompleted}</strong>p
                               </span>
                             )}
                           </div>
@@ -1409,8 +1412,13 @@ export default function StudentDashboard({ user, onUserUpdate }: StudentDashboar
       {activeTab === 'logs' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Study Form */}
-          <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm" id="study-log-form-wrapper">
-            <h3 className="text-lg font-bold text-gray-900 border-b border-gray-50 pb-2 mb-4">今日のがんばりを記録</h3>
+          <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col" id="study-log-form-wrapper">
+            <h3 className="text-lg font-bold text-gray-900 border-b border-gray-100 pb-3 mb-5 flex items-center gap-2">
+              <span className="bg-gradient-to-r from-indigo-500 to-purple-500 p-1.5 rounded-lg text-white">
+                <Calendar className="h-4 w-4" />
+              </span>
+              今日のがんばりを記録
+            </h3>
             
             <form onSubmit={handleSaveStudyLog} className="space-y-4">
               <div>
@@ -1716,6 +1724,12 @@ export default function StudentDashboard({ user, onUserUpdate }: StudentDashboar
                         </span>
                       </div>
                       
+                      {book.coverImageBase64 && (
+                        <div className="mb-3 w-full h-32 bg-indigo-50/50 rounded-xl overflow-hidden border border-indigo-100/30 flex items-center justify-center">
+                          <img src={book.coverImageBase64} alt={book.title} className="h-full w-full object-contain" />
+                        </div>
+                      )}
+
                       <h4 className="text-base font-black text-gray-800 tracking-tight leading-snug line-clamp-2 mb-2">{book.title}</h4>
                       
                       {book.instructions && (
@@ -1852,6 +1866,12 @@ export default function StudentDashboard({ user, onUserUpdate }: StudentDashboar
                         </button>
                       </div>
 
+                      {book.coverImageBase64 && (
+                        <div className="mb-3 w-full h-32 bg-gray-50 rounded-xl overflow-hidden border border-gray-100/50 flex items-center justify-center">
+                          <img src={book.coverImageBase64} alt={book.title} className="h-full w-full object-contain" />
+                        </div>
+                      )}
+
                       <h4 className="text-base font-black text-gray-800 tracking-tight leading-snug line-clamp-2 mb-3">
                         {book.title}
                       </h4>
@@ -1965,6 +1985,32 @@ export default function StudentDashboard({ user, onUserUpdate }: StudentDashboar
                     className="block w-full px-3 py-2 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-650 mb-1">教材の画像 (任意)</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      try {
+                        const base64 = await convertImageToBase64(file);
+                        setNewWbCoverImageBase64(base64);
+                      } catch (err) {
+                        console.error('Image processing failed:', err);
+                      }
+                    }
+                  }}
+                  className="block w-full text-xs text-gray-500 file:mr-4 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                />
+                {newWbCoverImageBase64 && (
+                  <div className="mt-2">
+                    <img src={newWbCoverImageBase64} alt="Preview" className="h-24 w-auto object-cover rounded shadow-sm" />
+                    <button type="button" onClick={() => setNewWbCoverImageBase64('')} className="mt-1 text-[10px] text-red-500 underline">画像を削除</button>
+                  </div>
+                )}
               </div>
 
               <button

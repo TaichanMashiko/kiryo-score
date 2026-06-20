@@ -66,4 +66,5 @@ export interface Workbook {
   totalPages?: number; // Total pages for study tracking
   instructions?: string; // Instructions or "取説" for studying the workbook
   createdBy?: string; // UID of the user who created it (student or teacher)
+  coverImageBase64?: string; // Base64 encoded image
 }
