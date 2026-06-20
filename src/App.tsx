@@ -105,20 +105,20 @@ export default function App() {
   // Rendering loading spinner on boot
   if (loadingAuth) {
     return (
-      <div className="flex h-screen w-screen items-center justify-center bg-gray-50 flex-col space-y-4" id="global-loader">
-        <div className="bg-indigo-600 text-white p-4 rounded-2xl animate-bounce shadow-md">
-          <GraduationCap className="h-10 w-10" />
+      <div className="flex h-screen w-screen items-center justify-center bg-slate-50 flex-col space-y-5" id="global-loader">
+        <div className="bg-slate-900 text-white p-5 rounded-[20px] animate-pulse shadow-sm">
+          <GraduationCap className="h-8 w-8" />
         </div>
         <div className="flex flex-col items-center">
-          <h2 className="text-sm font-extrabold text-gray-800 tracking-wider">水戸葵陵 Score & Study</h2>
-          <p className="text-[10px] text-gray-400 font-mono mt-1">システムの接続確認および認証情報のロード中...</p>
+          <h2 className="text-[15px] display-heading font-bold text-slate-800 tracking-wider">水戸葵陵 Score & Study</h2>
+          <p className="text-[11px] text-slate-400 font-mono mt-1.5">システムの接続確認および認証情報のロード中...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50/50 flex flex-col justify-between" id="app-viewport">
+    <div className="min-h-screen bg-slate-50/50 flex flex-col justify-between selection:bg-slate-900 selection:text-white" id="app-viewport">
       <div className="flex-1 flex flex-col">
         {/* Navbar is only rendered if authenticated */}
         <Navbar user={currentUser} onNavigate={navigate} currentPath={currentPath} />
@@ -139,7 +139,7 @@ export default function App() {
       </div>
 
       {/* Footer */}
-      <footer className="border-t border-gray-100 bg-white py-4 text-center text-xs text-gray-400 font-mono">
+      <footer className="bg-white border-t border-slate-200/60 py-5 text-center text-[10px] text-slate-400 font-mono tracking-wide">
         &copy; 2026 水戸葵陵高校 模試成績・学習総合管理システム. All rights reserved.
       </footer>
     </div>
